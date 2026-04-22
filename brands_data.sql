@@ -1,9 +1,13 @@
 -- Create the brands table
 CREATE TABLE IF NOT EXISTS brands (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    brand_name VARCHAR(100) NOT NULL,
-    official_pattern VARCHAR(100) NOT NULL
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    brand_name TEXT NOT NULL,
+    official_pattern TEXT NOT NULL
 );
+
+-- Delete the old table to be safe
+DROP TABLE IF EXISTS brands;
+CREATE TABLE brands (id INTEGER PRIMARY KEY AUTOINCREMENT, brand_name TEXT, official_pattern TEXT);
 
 -- Table: brands (Name, Official_VPA_Fragment)
 INSERT INTO brands (brand_name, official_pattern) VALUES
