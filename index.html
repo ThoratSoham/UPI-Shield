@@ -64,10 +64,23 @@
                 <h3 id="modalTitle">Scan QR Code</h3>
                 <button id="closeModalBtn" class="close-btn"><i class="fa-solid fa-xmark"></i></button>
             </div>
-            <div class="scanner-container">
+            <div class="scanner-container" id="scannerContainerView">
                 <div id="reader" style="width: 100%;"></div>
             </div>
-            <div class="modal-footer">
+            
+            <!-- Result Container View -->
+            <div id="scanResultView" class="scan-result-container hidden" style="padding: 30px 20px; text-align: center;">
+                <div id="resultIcon" class="result-icon" style="font-size: 3rem; margin-bottom: 15px;">
+                    <i class="fa-solid fa-circle-notch fa-spin"></i>
+                </div>
+                <h3 id="resultTitle" class="result-title" style="margin-bottom: 15px; font-size: 1.5rem;">Analyzing Code...</h3>
+                <div id="resultAlerts" class="result-alerts" style="text-align: left; display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px;"></div>
+                <button id="scanAgainBtn" class="action-btn primary-btn" style="padding: 12px; justify-content: center;">
+                    <span style="font-weight: 600; font-size: 1rem;">Scan Another</span>
+                </button>
+            </div>
+
+            <div class="modal-footer" id="modalFooterView">
                 <p id="scannerInstruction">Align the QR code within the frame.</p>
             </div>
         </div>

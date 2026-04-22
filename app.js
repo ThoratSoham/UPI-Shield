@@ -6,8 +6,37 @@ document.addEventListener('DOMContentLoaded', () => {
     const modalTitle = document.getElementById('modalTitle');
     const scannerInstruction = document.getElementById('scannerInstruction');
     
+    // UI View Containers
+    const scannerContainerView = document.getElementById('scannerContainerView');
+    const scanResultView = document.getElementById('scanResultView');
+    const modalFooterView = document.getElementById('modalFooterView');
+    
+    const resultIcon = document.getElementById('resultIcon');
+    const resultTitle = document.getElementById('resultTitle');
+    const resultAlerts = document.getElementById('resultAlerts');
+    const scanAgainBtn = document.getElementById('scanAgainBtn');
+
     let html5QrcodeScanner = null;
     let currentMode = '';
+
+    // Switch between scanner view and result view
+    function showResultView() {
+        scannerContainerView.classList.add('hidden');
+        modalFooterView.classList.add('hidden');
+        scanResultView.classList.remove('hidden');
+    }
+
+    function showScannerView() {
+        scanResultView.classList.add('hidden');
+        scannerContainerView.classList.remove('hidden');
+        modalFooterView.classList.remove('hidden');
+        
+        // Reset Result View
+        resultIcon.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i>';
+        resultTitle.textContent = 'Analyzing Code...';
+        resultTitle.style.color = 'var(--text-primary)';
+        resultAlerts.innerHTML = '';
+    }
 
     // Function to open modal
     function openModal(mode) {
@@ -20,6 +49,7 @@ document.addEventListener('DOMContentLoaded', () => {
             scannerInstruction.textContent = 'Scan sender\'s QR to verify details.';
         }
         
+        showScannerView();
         modalOverlay.classList.remove('hidden');
         startScanner();
     }
@@ -28,39 +58,104 @@ document.addEventListener('DOMContentLoaded', () => {
     function closeModal() {
         modalOverlay.classList.add('hidden');
         stopScanner();
+        // Delay to allow fade out animation
+        setTimeout(showScannerView, 300);
+    }
+
+    // Connect to Python FastAPI Backend
+    async function evaluateSafety(decodedText) {
+        showResultView();
+        try {
+            const response = await fetch('http://localhost:8000/check-safety', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    qr_raw: decodedText,
+                    user_intent: currentMode
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error("Network response was not ok");
+            }
+
+            const data = await response.json();
+            displayAnalysis(data);
+        } catch (error) {
+            console.error('Error contacting backend:', error);
+            resultIcon.innerHTML = '<i class="fa-solid fa-triangle-exclamation" style="color: var(--danger);"></i>';
+            resultTitle.textContent = 'Connection Error';
+            resultTitle.style.color = 'var(--danger)';
+            resultAlerts.innerHTML = `<div style="background: rgba(239, 68, 68, 0.1); padding: 12px; border-radius: 8px; border-left: 4px solid var(--danger); font-size: 0.9rem;">
+                Could not reach the security server. Is the FastAPI backend running on port 8000?
+            </div>`;
+        }
+    }
+
+    function displayAnalysis(data) {
+        resultAlerts.innerHTML = ''; // clear
+
+        if (data.is_safe && data.alerts.length === 0) {
+            resultIcon.innerHTML = '<i class="fa-solid fa-shield-check" style="color: var(--secondary-accent);"></i>';
+            resultTitle.textContent = 'Safe to Proceed';
+            resultTitle.style.color = 'var(--secondary-accent)';
+            
+            resultAlerts.innerHTML = `<div style="background: rgba(16, 185, 129, 0.1); padding: 12px; border-radius: 8px; border-left: 4px solid var(--secondary-accent); font-size: 0.9rem; color: #d1fae5;">
+                <i class="fa-solid fa-check-circle mr-2"></i> UPI Code verified successfully.
+            </div>`;
+        } else {
+            // Apply styling based on Risk Level
+            let colorHex = 'var(--danger)';
+            let iconClass = 'fa-solid fa-circle-xmark';
+            
+            if (data.risk_level === 'Medium') {
+                colorHex = '#f59e0b'; // amber
+                iconClass = 'fa-solid fa-triangle-exclamation';
+            }
+
+            resultIcon.innerHTML = `<i class="${iconClass}" style="color: ${colorHex};"></i>`;
+            resultTitle.textContent = `${data.risk_level} Risk Detected!`;
+            resultTitle.style.color = colorHex;
+
+            data.alerts.forEach(alertText => {
+                const alertDiv = document.createElement('div');
+                alertDiv.style.background = `rgba(0,0,0,0.3)`;
+                alertDiv.style.padding = '12px';
+                alertDiv.style.borderRadius = '8px';
+                alertDiv.style.borderLeft = `4px solid ${colorHex}`;
+                alertDiv.style.fontSize = '0.9rem';
+                alertDiv.style.color = '#f8fafc';
+                alertDiv.style.marginBottom = '8px';
+                alertDiv.innerHTML = `<i class="fa-solid fa-shield-virus"></i> ${alertText}`;
+                resultAlerts.appendChild(alertDiv);
+            });
+        }
     }
 
     // Success callback for QR Scanner
     function onScanSuccess(decodedText, decodedResult) {
-        // Stop scanning after a successful scan
-        stopScanner();
-        modalOverlay.classList.add('hidden');
+        // Pause scanning to evaluate
+        if(html5QrcodeScanner) {
+            html5QrcodeScanner.pause(true);
+        }
         
-        /* 
-        Here is where we process the decoded text depending on the mode.
-        In a real app, 'send' might parse UPI IDs (upi://pay?pa=xyz...) 
-        and 'receive' might verify a static QR or authenticate.
-        */
-        
-        setTimeout(() => {
-            if (currentMode === 'send') {
-                alert(`Sending Money Initiated!\n\nPayload:\n${decodedText}`);
-            } else {
-                alert(`Verification Successful!\n\nPayload:\n${decodedText}`);
-            }
-        }, 300);
+        // Pass to backend for validation
+        evaluateSafety(decodedText);
     }
 
     // Failure callback for QR Scanner
     function onScanFailure(error) {
-        // handle scan failure, usually better to ignore and keep scanning
-        // console.warn(`Code scan error = ${error}`);
+        // Ignore failures, wait for a good scan
     }
 
     // Start the scanner
     function startScanner() {
-        // Check if a scanner is already running
-        if (html5QrcodeScanner !== null) return;
+        if (html5QrcodeScanner !== null) {
+            if (html5QrcodeScanner.getState() === 3) { // 3 = PAUSED
+                html5QrcodeScanner.resume();
+            }
+            return;
+        }
         
         const config = {
             fps: 10,
@@ -70,8 +165,6 @@ document.addEventListener('DOMContentLoaded', () => {
         };
 
         html5QrcodeScanner = new Html5Qrcode("reader");
-        
-        // Select back camera or default to whatever is available
         const cameraConfig = { facingMode: "environment" };
 
         html5QrcodeScanner.start(
@@ -86,17 +179,16 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Stop the scanner
+    // Stop the scanner completely
     function stopScanner() {
         if (html5QrcodeScanner) {
-            html5QrcodeScanner.stop().then(() => {
-                html5QrcodeScanner.clear();
-                html5QrcodeScanner = null;
-                // Reset instruction text on close
-                scannerInstruction.style.color = 'var(--text-secondary)';
-            }).catch((err) => {
-                console.error("Error stopping scanner: ", err);
-            });
+            if (html5QrcodeScanner.getState() !== 1) { // Not state NOT_STARTED
+                html5QrcodeScanner.stop().then(() => {
+                    html5QrcodeScanner.clear();
+                    html5QrcodeScanner = null;
+                    scannerInstruction.style.color = 'var(--text-secondary)';
+                }).catch(err => console.error(err));
+            }
         }
     }
 
@@ -104,6 +196,12 @@ document.addEventListener('DOMContentLoaded', () => {
     sendMoneyBtn.addEventListener('click', () => openModal('send'));
     receiveMoneyBtn.addEventListener('click', () => openModal('receive'));
     closeModalBtn.addEventListener('click', closeModal);
+    
+    // Scan Again Button inside Result View
+    scanAgainBtn.addEventListener('click', () => {
+        showScannerView();
+        startScanner();
+    });
 
     // Close on clicking outside the modal content
     modalOverlay.addEventListener('click', (e) => {
