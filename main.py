@@ -79,7 +79,7 @@ async def check_safety(request: ScanRequest):
     score = 0
 
     # 2. THE RECEIVE TRAP (The #1 Scam)
-    if request.user_intent == "receive":
+    if request.user_intent.lower().strip() == "receive":
         score += 90
         warnings.append("ALERT: Scanning QRs is ONLY for sending money. Never for receiving. This is a scam trap.")
 
