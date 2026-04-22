@@ -5,12 +5,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const closeModalBtn = document.getElementById('closeModalBtn');
     const modalTitle = document.getElementById('modalTitle');
     const scannerInstruction = document.getElementById('scannerInstruction');
-    
+
     // UI View Containers
     const scannerContainerView = document.getElementById('scannerContainerView');
     const scanResultView = document.getElementById('scanResultView');
     const modalFooterView = document.getElementById('modalFooterView');
-    
+
     const resultIcon = document.getElementById('resultIcon');
     const resultTitle = document.getElementById('resultTitle');
     const resultAlerts = document.getElementById('resultAlerts');
@@ -30,7 +30,7 @@ document.addEventListener('DOMContentLoaded', () => {
         scanResultView.classList.add('hidden');
         scannerContainerView.classList.remove('hidden');
         modalFooterView.classList.remove('hidden');
-        
+
         // Reset Result View
         resultIcon.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i>';
         resultTitle.textContent = 'Analyzing Code...';
@@ -48,7 +48,7 @@ document.addEventListener('DOMContentLoaded', () => {
             modalTitle.textContent = 'Scan to Receive';
             scannerInstruction.textContent = 'Scan sender\'s QR to verify details.';
         }
-        
+
         showScannerView();
         modalOverlay.classList.remove('hidden');
         startScanner();
@@ -66,7 +66,7 @@ document.addEventListener('DOMContentLoaded', () => {
     async function evaluateSafety(decodedText) {
         showResultView();
         try {
-            const response = await fetch('http://localhost:8000/check-safety', {
+            const response = await fetch('https://upi-shielduvicorn-main-app-host-0-0-0-0.onrender.com/check-safety', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -99,7 +99,7 @@ document.addEventListener('DOMContentLoaded', () => {
             resultIcon.innerHTML = '<i class="fa-solid fa-shield-check" style="color: var(--secondary-accent);"></i>';
             resultTitle.textContent = 'Safe to Proceed';
             resultTitle.style.color = 'var(--secondary-accent)';
-            
+
             resultAlerts.innerHTML = `<div style="background: rgba(16, 185, 129, 0.1); padding: 12px; border-radius: 8px; border-left: 4px solid var(--secondary-accent); font-size: 0.9rem; color: #d1fae5;">
                 <i class="fa-solid fa-check-circle mr-2"></i> UPI Code verified successfully.
             </div>`;
@@ -107,7 +107,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // Apply styling based on Risk Level
             let colorHex = 'var(--danger)';
             let iconClass = 'fa-solid fa-circle-xmark';
-            
+
             if (data.risk_level === 'Medium') {
                 colorHex = '#f59e0b'; // amber
                 iconClass = 'fa-solid fa-triangle-exclamation';
@@ -135,10 +135,10 @@ document.addEventListener('DOMContentLoaded', () => {
     // Success callback for QR Scanner
     function onScanSuccess(decodedText, decodedResult) {
         // Pause scanning to evaluate
-        if(html5QrcodeScanner) {
+        if (html5QrcodeScanner) {
             html5QrcodeScanner.pause(true);
         }
-        
+
         // Pass to backend for validation
         evaluateSafety(decodedText);
     }
@@ -156,7 +156,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             return;
         }
-        
+
         const config = {
             fps: 10,
             qrbox: { width: 250, height: 250 },
@@ -196,7 +196,7 @@ document.addEventListener('DOMContentLoaded', () => {
     sendMoneyBtn.addEventListener('click', () => openModal('send'));
     receiveMoneyBtn.addEventListener('click', () => openModal('receive'));
     closeModalBtn.addEventListener('click', closeModal);
-    
+
     // Scan Again Button inside Result View
     scanAgainBtn.addEventListener('click', () => {
         showScannerView();
