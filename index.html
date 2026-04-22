@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UPI Shield - Secure Payments</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <!-- Font Awesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="background-effects">
+        <div class="glow glow-1"></div>
+        <div class="glow glow-2"></div>
+    </div>
+
+    <main class="app-container">
+        <header class="app-header">
+            <div class="logo-container">
+                <i class="fa-solid fa-shield-halved"></i>
+            </div>
+            <h1>UPI Shield</h1>
+            <p>Secure. Fast. Reliable.</p>
+        </header>
+
+        <section class="action-section">
+            <button id="sendMoneyBtn" class="action-btn primary-btn">
+                <div class="btn-content">
+                    <div class="icon-wrapper">
+                        <i class="fa-solid fa-paper-plane"></i>
+                    </div>
+                    <div class="text-wrapper">
+                        <h2>Send Money</h2>
+                        <p>Scan QR to pay someone</p>
+                    </div>
+                </div>
+                <i class="fa-solid fa-chevron-right arrow-icon"></i>
+            </button>
+
+            <button id="receiveMoneyBtn" class="action-btn secondary-btn">
+                <div class="btn-content">
+                    <div class="icon-wrapper">
+                        <i class="fa-solid fa-qrcode"></i>
+                    </div>
+                    <div class="text-wrapper">
+                        <h2>Receive Money</h2>
+                        <p>Scan QR to verify sender profile</p>
+                    </div>
+                </div>
+                <i class="fa-solid fa-chevron-right arrow-icon"></i>
+            </button>
+        </section>
+    </main>
+
+    <!-- QR Scanner Modal -->
+    <div id="scannerModal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalTitle">Scan QR Code</h3>
+                <button id="closeModalBtn" class="close-btn"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="scanner-container">
+                <div id="reader" style="width: 100%;"></div>
+            </div>
+            <div class="modal-footer">
+                <p id="scannerInstruction">Align the QR code within the frame.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- HTML5 QR Code Library -->
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    <script src="app.js"></script>
+</body>
+</html>
