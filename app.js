@@ -1,3 +1,20 @@
+const supabaseUrl = 'https://ntfzicpfqwderifnkodc.supabase.co'
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im50ZnppY3BmcXdkZXJpZm5rb2RjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc1MjQ1NTksImV4cCI6MjA5MzEwMDU1OX0.uMVRFVLBHRZQ-6HPQ-QmBM-Fch2N-RdMKc73CIH7gH0'
+const supabase = supabase.createClient(supabaseUrl, supabaseKey)
+console.log("Supabase Client:", supabase);
+// Example: Fetching data from a table named 'products'
+async function getProducts() {
+    const { data, error } = await supabase
+        .from('products')
+        .select('*')
+
+    if (error) console.error('Error:', error)
+    else console.log('Products:', data)
+}
+
+getProducts();
+
+
 document.addEventListener('DOMContentLoaded', () => {
     const sendMoneyBtn = document.getElementById('sendMoneyBtn');
     const receiveMoneyBtn = document.getElementById('receiveMoneyBtn');
