@@ -116,7 +116,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const { data, error } = await supabaseClient
                 .from('transactions')
                 .select('*')
-                .order('created_at', { ascending: false });
+                .order('id', { ascending: false });
 
             if (error) throw error;
 
@@ -127,24 +127,20 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             data.forEach(tx => {
-                const isReported = tx.is_reported || false;
+                const isReported = tx.danger === 'yes';
                 const txEl = document.createElement('div');
                 txEl.className = 'history-item';
 
-                // Format date
-                const date = new Date(tx.created_at).toLocaleDateString('en-IN', {
-                    day: 'numeric', month: 'short', year: 'numeric',
-                    hour: '2-digit', minute: '2-digit'
-                });
+                const displayId = `Transaction #${tx.id || 'N/A'}`;
 
                 txEl.innerHTML = `
                     <div class="history-info">
-                        <div class="history-upi">${tx.upi_id}</div>
-                        <div class="history-meta">${date}</div>
-                        <div class="history-meta" style="color: ${tx.status === 'Danger' ? 'var(--danger)' : 'var(--secondary-accent)'}; font-weight: 600;">${tx.status || 'Success'}</div>
+                        <div class="history-upi">${tx.qr}</div>
+                        <div class="history-meta">${displayId}</div>
+                        <div class="history-meta" style="color: ${isReported ? 'var(--danger)' : 'var(--secondary-accent)'}; font-weight: 600;">${isReported ? 'Danger' : 'Success'}</div>
                     </div>
                     <div class="history-actions">
-                        <div class="history-amount">₹${tx.amount}</div>
+                        <div class="history-amount">₹${tx.price}</div>
                         <button class="report-btn" data-id="${tx.id}" ${isReported ? 'disabled' : ''}>
                             ${isReported ? '<i class="fa-solid fa-flag"></i> Reported' : '<i class="fa-solid fa-triangle-exclamation"></i> Report'}
                         </button>
@@ -175,7 +171,7 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             const { error } = await supabaseClient
                 .from('transactions')
-                .update({ is_reported: true, status: 'Danger' })
+                .update({ danger: 'yes' })
                 .eq('id', txId);
 
             if (error) throw error;
@@ -411,10 +407,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 .from('transactions')
                 .insert([
                     {
-                        upi_id: upiId,
-                        amount: amount,
-                        status: 'Success',
-                        is_reported: false
+                        qr: upiId,
+                        price: amount,
+                        danger: 'no'
                     }
                 ]);
 
