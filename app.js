@@ -41,6 +41,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const resultTitle = document.getElementById('resultTitle');
     const resultAlerts = document.getElementById('resultAlerts');
     const scanAgainBtn = document.getElementById('scanAgainBtn');
+    const sendFakeMoneyBtn = document.getElementById('sendFakeMoneyBtn');
+    const transactionSuccessMsg = document.getElementById('transactionSuccessMsg');
 
     let html5QrcodeScanner = null;
     let currentMode = '';
@@ -62,6 +64,8 @@ document.addEventListener('DOMContentLoaded', () => {
         resultTitle.textContent = 'Analyzing Code...';
         resultTitle.style.color = 'var(--text-primary)';
         resultAlerts.innerHTML = '';
+        sendFakeMoneyBtn.classList.add('hidden');
+        transactionSuccessMsg.classList.add('hidden');
     }
 
     // Function to open modal
@@ -101,24 +105,29 @@ document.addEventListener('DOMContentLoaded', () => {
                 })
             });
 
-            if (!response.ok) {
-                throw new Error("Network response was not ok");
-            }
-
             const data = await response.json();
-            displayAnalysis(data);
+            displayAnalysis(data, decodedText);
+
+            // --- ADD THIS TO SAVE TO SUPABASE ---
+            const { error } = await supabaseClient
+                .from('scans')
+                .insert([
+                    {
+                        qr_content: decodedText,
+                        risk_level: data.risk_level || 'Unknown'
+                    }
+                ]);
+
+            if (error) console.error('Supabase Save Error:', error.message);
+            else console.log('Scan successfully saved to Supabase!');
+            // ------------------------------------
+
         } catch (error) {
-            console.error('Error contacting backend:', error);
-            resultIcon.innerHTML = '<i class="fa-solid fa-triangle-exclamation" style="color: var(--danger);"></i>';
-            resultTitle.textContent = 'Connection Error';
-            resultTitle.style.color = 'var(--danger)';
-            resultAlerts.innerHTML = `<div style="background: rgba(239, 68, 68, 0.1); padding: 12px; border-radius: 8px; border-left: 4px solid var(--danger); font-size: 0.9rem;">
-                Could not reach the security server. Is the FastAPI backend running on port 8000?
-            </div>`;
+            console.error('Error:', error);
         }
     }
 
-    function displayAnalysis(data) {
+    function displayAnalysis(data, decodedText) {
         resultAlerts.innerHTML = ''; // clear
 
         if (data.is_safe && data.alerts.length === 0) {
@@ -129,6 +138,42 @@ document.addEventListener('DOMContentLoaded', () => {
             resultAlerts.innerHTML = `<div style="background: rgba(16, 185, 129, 0.1); padding: 12px; border-radius: 8px; border-left: 4px solid var(--secondary-accent); font-size: 0.9rem; color: #d1fae5;">
                 <i class="fa-solid fa-check-circle mr-2"></i> UPI Code verified successfully.
             </div>`;
+
+            if (currentMode === 'send') {
+                sendFakeMoneyBtn.classList.remove('hidden');
+                
+                sendFakeMoneyBtn.onclick = async () => {
+                    // Extract UPI ID
+                    let upiId = decodedText;
+                    try {
+                        if (decodedText.toLowerCase().startsWith('upi://')) {
+                            const url = new URL(decodedText);
+                            upiId = url.searchParams.get('pa') || decodedText;
+                        }
+                    } catch (e) {
+                        console.error('Error parsing UPI:', e);
+                    }
+
+                    // Save to transactions table
+                    const { error } = await supabaseClient
+                        .from('transactions')
+                        .insert([
+                            {
+                                upi_id: upiId,
+                                amount: 100, // Fake amount
+                                status: 'Success'
+                            }
+                        ]);
+
+                    if (error) {
+                        console.error('Transaction Save Error:', error.message);
+                    } else {
+                        console.log('Transaction saved successfully to Supabase!');
+                        sendFakeMoneyBtn.classList.add('hidden');
+                        transactionSuccessMsg.classList.remove('hidden');
+                    }
+                };
+            }
         } else {
             // Apply styling based on Risk Level
             let colorHex = 'var(--danger)';
