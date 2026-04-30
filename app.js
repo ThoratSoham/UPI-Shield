@@ -1,17 +1,17 @@
-const supabaseUrl = 'https://ntfzicpfqwderifnkodc.supabase.co'
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im50ZnppY3BmcXdkZXJpZm5rb2RjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc1MjQ1NTksImV4cCI6MjA5MzEwMDU1OX0.uMVRFVLBHRZQ-6HPQ-QmBM-Fch2N-RdMKc73CIH7gH0'
-const supabase = supabase.createClient(supabaseUrl, supabaseKey)
+// Change 'supabase' to 'supabaseClient'
+const supabaseUrl = 'https://ntfzicpfqwderifnkodc.supabase.co';
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im50ZnppY3BmcXdkZXJpZm5rb2RjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc1MjQ1NTksImV4cCI6MjA5MzEwMDU1OX0.uMVRFVLBHRZQ-6HPQ-QmBM-Fch2N-RdMKc73CIH7gH0';
 
-
-// Initialize with the new name
+// This initializes your specific project connection
 const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
 
-// Now use the new name for your logs or queries
-console.log("Supabase is ready:", supabaseClient);
+// Now use 'supabaseClient' for your logic
+console.log("Supabase is connected:", supabaseClient);
 
 // Example: Fetching data from a table named 'products'
 async function getProducts() {
-    const { data, error } = await supabase
+    // Changed 'supabase' to 'supabaseClient'
+    const { data, error } = await supabaseClient
         .from('products')
         .select('*')
 
