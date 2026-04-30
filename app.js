@@ -262,20 +262,9 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>`;
 
             if (currentMode === 'send') {
-                // Extract UPI ID
-                let upiId = decodedText;
-                try {
-                    if (decodedText.toLowerCase().startsWith('upi://')) {
-                        const url = new URL(decodedText);
-                        upiId = url.searchParams.get('pa') || decodedText;
-                    }
-                } catch (e) {
-                    console.error('Error parsing UPI:', e);
-                }
-
-                // Redirect to payment screen
+                // Use the raw scanned text as the ID
                 closeModal();
-                showPaymentScreen(upiId);
+                showPaymentScreen(decodedText);
             }
         } else {
             // Apply styling based on Risk Level
