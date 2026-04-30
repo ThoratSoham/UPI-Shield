@@ -41,21 +41,20 @@ document.addEventListener('DOMContentLoaded', () => {
     const resultTitle = document.getElementById('resultTitle');
     const resultAlerts = document.getElementById('resultAlerts');
     const scanAgainBtn = document.getElementById('scanAgainBtn');
-    const scanAgainBtn = document.getElementById('scanAgainBtn');
 
     // NEW View Elements
     const homeView = document.getElementById('homeView');
     const paymentView = document.getElementById('paymentView');
     const historyView = document.getElementById('historyView');
     const navHistoryBtn = document.getElementById('navHistoryBtn');
-    
+
     // Payment Elements
     const backToHomeFromPayment = document.getElementById('backToHomeFromPayment');
     const paymentUpiId = document.getElementById('paymentUpiId');
     const paymentAmount = document.getElementById('paymentAmount');
     const confirmPayBtn = document.getElementById('confirmPayBtn');
     const paymentSuccessMsg = document.getElementById('paymentSuccessMsg');
-    
+
     // History Elements
     const backToHomeFromHistory = document.getElementById('backToHomeFromHistory');
     const historyListContainer = document.getElementById('historyListContainer');
@@ -111,7 +110,7 @@ document.addEventListener('DOMContentLoaded', () => {
         hideAllViews();
         historyView.classList.remove('hidden');
         historyListContainer.innerHTML = '<div style="text-align: center; color: var(--text-secondary); padding: 20px;">Loading transactions...</div>';
-        
+
         // Fetch transactions
         try {
             const { data, error } = await supabaseClient
@@ -131,7 +130,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const isReported = tx.is_reported || false;
                 const txEl = document.createElement('div');
                 txEl.className = 'history-item';
-                
+
                 // Format date
                 const date = new Date(tx.created_at).toLocaleDateString('en-IN', {
                     day: 'numeric', month: 'short', year: 'numeric',
@@ -169,7 +168,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function reportTransaction(txId, btn, txEl) {
         if (!confirm('Are you sure you want to report this transaction as fraudulent?')) return;
-        
+
         btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
         btn.disabled = true;
 
@@ -183,7 +182,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             btn.innerHTML = '<i class="fa-solid fa-flag"></i> Reported';
             const statusDiv = txEl.querySelector('.history-info .history-meta:last-child');
-            if(statusDiv) {
+            if (statusDiv) {
                 statusDiv.textContent = 'Danger';
                 statusDiv.style.color = 'var(--danger)';
             }
