@@ -41,8 +41,24 @@ document.addEventListener('DOMContentLoaded', () => {
     const resultTitle = document.getElementById('resultTitle');
     const resultAlerts = document.getElementById('resultAlerts');
     const scanAgainBtn = document.getElementById('scanAgainBtn');
-    const sendFakeMoneyBtn = document.getElementById('sendFakeMoneyBtn');
-    const transactionSuccessMsg = document.getElementById('transactionSuccessMsg');
+    const scanAgainBtn = document.getElementById('scanAgainBtn');
+
+    // NEW View Elements
+    const homeView = document.getElementById('homeView');
+    const paymentView = document.getElementById('paymentView');
+    const historyView = document.getElementById('historyView');
+    const navHistoryBtn = document.getElementById('navHistoryBtn');
+    
+    // Payment Elements
+    const backToHomeFromPayment = document.getElementById('backToHomeFromPayment');
+    const paymentUpiId = document.getElementById('paymentUpiId');
+    const paymentAmount = document.getElementById('paymentAmount');
+    const confirmPayBtn = document.getElementById('confirmPayBtn');
+    const paymentSuccessMsg = document.getElementById('paymentSuccessMsg');
+    
+    // History Elements
+    const backToHomeFromHistory = document.getElementById('backToHomeFromHistory');
+    const historyListContainer = document.getElementById('historyListContainer');
 
     let html5QrcodeScanner = null;
     let currentMode = '';
@@ -64,8 +80,119 @@ document.addEventListener('DOMContentLoaded', () => {
         resultTitle.textContent = 'Analyzing Code...';
         resultTitle.style.color = 'var(--text-primary)';
         resultAlerts.innerHTML = '';
-        sendFakeMoneyBtn.classList.add('hidden');
-        transactionSuccessMsg.classList.add('hidden');
+    }
+
+    // View Switchers
+    function hideAllViews() {
+        homeView.classList.add('hidden');
+        paymentView.classList.add('hidden');
+        historyView.classList.add('hidden');
+    }
+
+    function showHome() {
+        hideAllViews();
+        homeView.classList.remove('hidden');
+        // Reset payment stuff
+        paymentAmount.value = '';
+        paymentSuccessMsg.classList.add('hidden');
+        confirmPayBtn.classList.remove('hidden');
+        confirmPayBtn.disabled = false;
+        confirmPayBtn.innerHTML = '<span style="font-weight: 600; font-size: 1.2rem;">Pay Now</span>';
+    }
+
+    function showPaymentScreen(upiId) {
+        hideAllViews();
+        paymentView.classList.remove('hidden');
+        paymentUpiId.textContent = upiId;
+        paymentUpiId.dataset.upi = upiId; // Store actual ID
+    }
+
+    async function showHistoryScreen() {
+        hideAllViews();
+        historyView.classList.remove('hidden');
+        historyListContainer.innerHTML = '<div style="text-align: center; color: var(--text-secondary); padding: 20px;">Loading transactions...</div>';
+        
+        // Fetch transactions
+        try {
+            const { data, error } = await supabaseClient
+                .from('transactions')
+                .select('*')
+                .order('created_at', { ascending: false });
+
+            if (error) throw error;
+
+            historyListContainer.innerHTML = '';
+            if (!data || data.length === 0) {
+                historyListContainer.innerHTML = '<div style="text-align: center; color: var(--text-secondary); padding: 20px;">No transactions found.</div>';
+                return;
+            }
+
+            data.forEach(tx => {
+                const isReported = tx.is_reported || false;
+                const txEl = document.createElement('div');
+                txEl.className = 'history-item';
+                
+                // Format date
+                const date = new Date(tx.created_at).toLocaleDateString('en-IN', {
+                    day: 'numeric', month: 'short', year: 'numeric',
+                    hour: '2-digit', minute: '2-digit'
+                });
+
+                txEl.innerHTML = `
+                    <div class="history-info">
+                        <div class="history-upi">${tx.upi_id}</div>
+                        <div class="history-meta">${date}</div>
+                        <div class="history-meta" style="color: ${tx.status === 'Danger' ? 'var(--danger)' : 'var(--secondary-accent)'}; font-weight: 600;">${tx.status || 'Success'}</div>
+                    </div>
+                    <div class="history-actions">
+                        <div class="history-amount">₹${tx.amount}</div>
+                        <button class="report-btn" data-id="${tx.id}" ${isReported ? 'disabled' : ''}>
+                            ${isReported ? '<i class="fa-solid fa-flag"></i> Reported' : '<i class="fa-solid fa-triangle-exclamation"></i> Report'}
+                        </button>
+                    </div>
+                `;
+
+                // Add report listener
+                const reportBtn = txEl.querySelector('.report-btn');
+                if (!isReported) {
+                    reportBtn.addEventListener('click', () => reportTransaction(tx.id, reportBtn, txEl));
+                }
+
+                historyListContainer.appendChild(txEl);
+            });
+
+        } catch (err) {
+            console.error('Error fetching history:', err);
+            historyListContainer.innerHTML = '<div style="text-align: center; color: var(--danger); padding: 20px;">Failed to load history. Make sure "transactions" table exists.</div>';
+        }
+    }
+
+    async function reportTransaction(txId, btn, txEl) {
+        if (!confirm('Are you sure you want to report this transaction as fraudulent?')) return;
+        
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+        btn.disabled = true;
+
+        try {
+            const { error } = await supabaseClient
+                .from('transactions')
+                .update({ is_reported: true, status: 'Danger' })
+                .eq('id', txId);
+
+            if (error) throw error;
+
+            btn.innerHTML = '<i class="fa-solid fa-flag"></i> Reported';
+            const statusDiv = txEl.querySelector('.history-info .history-meta:last-child');
+            if(statusDiv) {
+                statusDiv.textContent = 'Danger';
+                statusDiv.style.color = 'var(--danger)';
+            }
+        } catch (err) {
+            console.error('Report error:', err);
+            btn.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Report';
+            btn.disabled = false;
+            alert('Failed to report transaction.');
+        }
     }
 
     // Function to open modal
@@ -140,39 +267,20 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>`;
 
             if (currentMode === 'send') {
-                sendFakeMoneyBtn.classList.remove('hidden');
-                
-                sendFakeMoneyBtn.onclick = async () => {
-                    // Extract UPI ID
-                    let upiId = decodedText;
-                    try {
-                        if (decodedText.toLowerCase().startsWith('upi://')) {
-                            const url = new URL(decodedText);
-                            upiId = url.searchParams.get('pa') || decodedText;
-                        }
-                    } catch (e) {
-                        console.error('Error parsing UPI:', e);
+                // Extract UPI ID
+                let upiId = decodedText;
+                try {
+                    if (decodedText.toLowerCase().startsWith('upi://')) {
+                        const url = new URL(decodedText);
+                        upiId = url.searchParams.get('pa') || decodedText;
                     }
+                } catch (e) {
+                    console.error('Error parsing UPI:', e);
+                }
 
-                    // Save to transactions table
-                    const { error } = await supabaseClient
-                        .from('transactions')
-                        .insert([
-                            {
-                                upi_id: upiId,
-                                amount: 100, // Fake amount
-                                status: 'Success'
-                            }
-                        ]);
-
-                    if (error) {
-                        console.error('Transaction Save Error:', error.message);
-                    } else {
-                        console.log('Transaction saved successfully to Supabase!');
-                        sendFakeMoneyBtn.classList.add('hidden');
-                        transactionSuccessMsg.classList.remove('hidden');
-                    }
-                };
+                // Redirect to payment screen
+                closeModal();
+                showPaymentScreen(upiId);
             }
         } else {
             // Apply styling based on Risk Level
@@ -278,6 +386,53 @@ document.addEventListener('DOMContentLoaded', () => {
     modalOverlay.addEventListener('click', (e) => {
         if (e.target === modalOverlay) {
             closeModal();
+        }
+    });
+
+    // Navigation Listeners
+    navHistoryBtn.addEventListener('click', showHistoryScreen);
+    backToHomeFromPayment.addEventListener('click', showHome);
+    backToHomeFromHistory.addEventListener('click', showHome);
+
+    // Payment Flow Listener
+    confirmPayBtn.addEventListener('click', async () => {
+        const amount = parseFloat(paymentAmount.value);
+        if (isNaN(amount) || amount <= 0) {
+            alert("Please enter a valid amount");
+            return;
+        }
+
+        confirmPayBtn.disabled = true;
+        confirmPayBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Processing...';
+
+        const upiId = paymentUpiId.dataset.upi;
+
+        try {
+            const { error } = await supabaseClient
+                .from('transactions')
+                .insert([
+                    {
+                        upi_id: upiId,
+                        amount: amount,
+                        status: 'Success',
+                        is_reported: false
+                    }
+                ]);
+
+            if (error) throw error;
+
+            confirmPayBtn.classList.add('hidden');
+            paymentSuccessMsg.classList.remove('hidden');
+
+            setTimeout(() => {
+                showHome();
+            }, 2500);
+
+        } catch (err) {
+            console.error("Payment error:", err);
+            confirmPayBtn.disabled = false;
+            confirmPayBtn.innerHTML = '<span style="font-weight: 600; font-size: 1.2rem;">Pay Now</span>';
+            alert("Payment failed. Make sure 'transactions' table exists.");
         }
     });
 

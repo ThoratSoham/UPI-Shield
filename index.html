@@ -21,13 +21,18 @@
         <div class="glow glow-2"></div>
     </div>
 
-    <main class="app-container">
+    <main class="app-container" id="homeView">
         <header class="app-header">
             <div class="logo-container">
                 <i class="fa-solid fa-shield-halved"></i>
             </div>
             <h1>UPI Shield</h1>
             <p>Secure. Fast. Reliable.</p>
+            <div style="margin-top: 15px;">
+                <button id="navHistoryBtn" class="action-btn" style="padding: 10px 15px; width: auto; display: inline-flex; justify-content: center; background: rgba(255,255,255,0.05);">
+                    <span style="font-size: 0.9rem; font-weight: 600;"><i class="fa-solid fa-clock-rotate-left" style="margin-right: 5px;"></i> View History</span>
+                </button>
+            </div>
         </header>
 
         <section class="action-section">
@@ -59,6 +64,48 @@
         </section>
     </main>
 
+    <!-- Payment View -->
+    <main class="app-container hidden" id="paymentView">
+        <header class="app-header" style="margin-bottom: 20px; position: relative;">
+            <button id="backToHomeFromPayment" class="close-btn" style="position: absolute; top: 0; left: 0;"><i class="fa-solid fa-arrow-left"></i></button>
+            <div class="logo-container" style="width: 60px; height: 60px; font-size: 1.5rem; margin-bottom: 10px;">
+                <i class="fa-solid fa-money-bill-transfer"></i>
+            </div>
+            <h2 style="font-size: 1.8rem; margin-bottom: 5px;">Send Payment</h2>
+        </header>
+
+        <section class="payment-section" style="text-align: center;">
+            <p style="color: var(--text-secondary); margin-bottom: 5px;">Paying to:</p>
+            <h3 id="paymentUpiId" style="color: var(--primary-accent); margin-bottom: 30px; word-break: break-all; font-weight: 400;">someone@upi</h3>
+            
+            <div class="amount-input-container" style="margin-bottom: 30px; display: flex; align-items: center; justify-content: center;">
+                <span style="font-size: 2.5rem; color: var(--text-primary); margin-right: 10px;">₹</span>
+                <input type="number" id="paymentAmount" placeholder="0" style="background: transparent; border: none; border-bottom: 2px solid var(--card-border); color: var(--text-primary); font-size: 3rem; width: 150px; text-align: center; font-family: 'Outfit', sans-serif; outline: none; transition: border-color 0.3s;" />
+            </div>
+
+            <button id="confirmPayBtn" class="action-btn primary-btn" style="justify-content: center; padding: 15px;">
+                <span style="font-weight: 600; font-size: 1.2rem;">Pay Now</span>
+            </button>
+            
+            <div id="paymentSuccessMsg" class="hidden" style="margin-top: 20px; color: var(--secondary-accent); font-weight: 600; font-size: 1.2rem; background: rgba(16, 185, 129, 0.1); padding: 15px; border-radius: 12px;">
+                <i class="fa-solid fa-circle-check"></i> Payment Successful!
+            </div>
+        </section>
+    </main>
+
+    <!-- History View -->
+    <main class="app-container hidden" id="historyView">
+        <header class="app-header" style="margin-bottom: 20px; position: relative;">
+            <button id="backToHomeFromHistory" class="close-btn" style="position: absolute; top: 0; left: 0;"><i class="fa-solid fa-arrow-left"></i></button>
+            <h2 style="font-size: 1.5rem; margin-top: 10px;">Transaction History</h2>
+        </header>
+
+        <section class="history-section" id="historyListContainer" style="display: flex; flex-direction: column; gap: 15px; max-height: 450px; overflow-y: auto; padding-right: 5px;">
+            <!-- Transactions will be injected here -->
+            <div style="text-align: center; color: var(--text-secondary); padding: 20px;">Loading transactions...</div>
+        </section>
+    </main>
+
     <!-- QR Scanner Modal -->
     <div id="scannerModal" class="modal-overlay hidden">
         <div class="modal-content">
@@ -80,13 +127,6 @@
                     Code...</h3>
                 <div id="resultAlerts" class="result-alerts"
                     style="text-align: left; display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px;">
-                </div>
-                <button id="sendFakeMoneyBtn" class="action-btn hidden"
-                    style="padding: 12px; justify-content: center; margin-bottom: 10px; background-color: #10b981; color: white;">
-                    <span style="font-weight: 600; font-size: 1rem;">Send Fake Money</span>
-                </button>
-                <div id="transactionSuccessMsg" class="hidden" style="color: #10b981; margin-bottom: 15px; font-weight: 600; font-size: 1.2rem;">
-                    <i class="fa-solid fa-circle-check"></i> Fake Money Sent Successfully!
                 </div>
                 <button id="scanAgainBtn" class="action-btn primary-btn"
                     style="padding: 12px; justify-content: center;">
