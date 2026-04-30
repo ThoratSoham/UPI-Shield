@@ -9,17 +9,19 @@ const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
 console.log("Supabase is connected:", supabaseClient);
 
 // Example: Fetching data from a table named 'products'
-async function getProducts() {
-    // Changed 'supabase' to 'supabaseClient'
+async function getScans() {
     const { data, error } = await supabaseClient
-        .from('products')
-        .select('*')
+        .from('scans') // Change this to your new table name
+        .select('*');
 
-    if (error) console.error('Error:', error)
-    else console.log('Products:', data)
+    if (error) {
+        console.error('Database Error:', error.message);
+    } else {
+        console.log('Past Scans:', data);
+    }
 }
 
-getProducts();
+getScans();
 
 
 document.addEventListener('DOMContentLoaded', () => {
