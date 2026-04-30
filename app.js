@@ -415,7 +415,7 @@ document.addEventListener('DOMContentLoaded', () => {
             console.error("Payment error:", err);
             confirmPayBtn.disabled = false;
             confirmPayBtn.innerHTML = '<span style="font-weight: 600; font-size: 1.2rem;">Pay Now</span>';
-            alert("Payment failed. Make sure 'transactions' table exists.");
+            alert("Payment failed: " + (err.message || err.toString()));
         }
     });
 
